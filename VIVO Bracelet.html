@@ -1,0 +1,901 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+<title>VIVO — il bracciale che veglia su chi ami</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#050507;
+  --bg-2:#0a0b0f;
+  --ink:#f4f5f7;
+  --ink-dim:#9aa0ac;
+  --ink-faint:#5d626c;
+  --line:rgba(255,255,255,.08);
+  --line-2:rgba(255,255,255,.14);
+  --sos:#ff3a3f;
+  --sos-glow:rgba(255,58,63,.55);
+  --pulse:#3dd28d;
+  --gps:#5aa7ff;
+  --gold:#cfa54c;
+  --syne:"Syne", "Helvetica Neue", sans-serif;
+  --body:"Plus Jakarta Sans","Helvetica Neue",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;color:var(--ink);font-family:var(--body);-webkit-font-smoothing:antialiased;font-weight:300}
+body{overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+
+/* page-wide darkness with a faint vignetted light over everything */
+.page-bg{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(120% 70% at 50% 0%, rgba(60,70,90,.18), transparent 55%),
+    radial-gradient(80% 50% at 50% 110%, rgba(50,60,80,.10), transparent 60%),
+    #040406;
+}
+.page-grain{
+  position:fixed;inset:0;z-index:1;pointer-events:none;mix-blend-mode:overlay;opacity:.35;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .14 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* top bar */
+.topbar{
+  position:fixed;top:0;left:0;right:0;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 28px;
+  font-family:var(--syne);font-weight:700;letter-spacing:.18em;font-size:13px;
+  background:linear-gradient(to bottom, rgba(0,0,0,.65), rgba(0,0,0,0));
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+}
+.topbar .brand{display:flex;align-items:center;gap:10px}
+.topbar .brand .dot{width:8px;height:8px;border-radius:50%;background:var(--sos);box-shadow:0 0 10px var(--sos-glow)}
+.topbar nav{display:flex;gap:22px;font-family:var(--body);font-weight:400;letter-spacing:.04em;font-size:12px;color:var(--ink-dim);text-transform:uppercase}
+.topbar nav a:hover{color:var(--ink)}
+.topbar .cta{
+  font-family:var(--body);font-weight:500;font-size:12px;letter-spacing:.06em;
+  border:1px solid var(--line-2);padding:9px 14px;border-radius:999px;color:var(--ink);
+  text-transform:uppercase;
+}
+
+/* orbital stage */
+.stage{
+  position:relative;z-index:2;
+  /* one big tall page; sections each 100vh */
+}
+.section{
+  position:relative;height:100vh;width:100%;
+}
+
+/* the fixed bracelet centerpiece */
+.bracelet-mount{
+  position:fixed;
+  left:50%;top:50%;
+  width:min(380px, 32vw);
+  height:min(720px, 78vh);
+  transform:translate(-50%,-50%);
+  z-index:5;
+  pointer-events:none;
+  display:flex;align-items:center;justify-content:center;
+}
+.bracelet-mount .haze{
+  position:absolute;inset:-20% -40%;
+  background:
+    radial-gradient(60% 35% at 50% 22%, rgba(220,230,255,.18), transparent 62%),
+    radial-gradient(35% 22% at 50% 78%, rgba(255,255,255,.10), transparent 70%);
+  filter:blur(4px);
+}
+.bracelet-mount .floor{
+  position:absolute;left:50%;bottom:8%;
+  width:80%;height:14%;
+  transform:translateX(-50%);
+  background:radial-gradient(closest-side, rgba(180,200,230,.12), transparent 70%);
+  filter:blur(6px);
+}
+.bracelet-mount .ripple{
+  position:absolute;left:50%;bottom:7%;
+  width:60%;aspect-ratio:5/1;border-radius:50%;
+  transform:translateX(-50%);
+  border:1px solid rgba(180,200,230,.10);
+  animation:ripple 5s linear infinite;
+}
+.bracelet-mount .ripple.r2{animation-delay:1.5s;width:75%}
+.bracelet-mount .ripple.r3{animation-delay:3s;width:90%}
+@keyframes ripple{
+  0%{transform:translateX(-50%) scale(.6);opacity:.55}
+  100%{transform:translateX(-50%) scale(1.25);opacity:0}
+}
+
+.bracelet-wrap{
+  position:relative;
+  width:100%;height:100%;
+  display:flex;align-items:center;justify-content:center;
+  transform-style:preserve-3d;
+  perspective:1200px;
+}
+.bracelet{
+  position:relative;
+  width:62%;height:78%;
+  transform-origin:50% 50%;
+  will-change:transform;
+  filter:drop-shadow(0 30px 60px rgba(0,0,0,.85));
+}
+/* the bracelet body — built with CSS */
+.brace-body{
+  position:absolute;inset:0;
+  border-radius:42% 42% 38% 38% / 18% 18% 14% 14%;
+  background:
+    radial-gradient(110% 35% at 50% 12%, rgba(180,190,210,.45), transparent 55%),
+    radial-gradient(95% 60% at 30% 50%, rgba(60,70,90,.55), transparent 55%),
+    radial-gradient(95% 60% at 70% 60%, rgba(20,24,32,.9), transparent 55%),
+    linear-gradient(180deg, #1a1d24, #06070a 70%, #0c0d10);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.18),
+    inset 0 -2px 18px rgba(0,0,0,.7),
+    inset 6px 0 24px rgba(255,255,255,.05),
+    inset -6px 0 24px rgba(0,0,0,.7);
+}
+.brace-body::before{
+  /* glossy highlight */
+  content:"";position:absolute;left:8%;right:38%;top:6%;height:62%;
+  border-radius:50%/30%;
+  background:linear-gradient(160deg, rgba(255,255,255,.22), rgba(255,255,255,.02) 60%, transparent 80%);
+  filter:blur(2px);
+}
+.brace-body::after{
+  /* faint water drops */
+  content:"";position:absolute;inset:0;
+  background:
+    radial-gradient(circle at 28% 38%, rgba(255,255,255,.16) 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 32% 56%, rgba(255,255,255,.10) 0 1px, transparent 2px),
+    radial-gradient(circle at 38% 70%, rgba(255,255,255,.18) 0 2px, transparent 3px),
+    radial-gradient(circle at 60% 30%, rgba(255,255,255,.08) 0 1.2px, transparent 2px),
+    radial-gradient(circle at 66% 64%, rgba(255,255,255,.12) 0 1.5px, transparent 2.5px);
+  opacity:.7;
+}
+.brace-top{
+  position:absolute;left:18%;right:18%;top:-3%;height:9%;
+  border-radius:50% 50% 30% 30% / 80% 80% 20% 20%;
+  background:linear-gradient(180deg,#2a2d34,#0a0b0e);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35), 0 4px 12px rgba(0,0,0,.6);
+}
+.brace-top::before{
+  content:"";position:absolute;left:46%;top:30%;width:8%;height:30%;border-radius:50%;
+  background:radial-gradient(circle, #444 0%, #111 70%);
+}
+.sos-btn{
+  position:absolute;left:50%;top:40%;
+  width:30%;aspect-ratio:1;border-radius:50%;
+  transform:translate(-50%,-50%);
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255,255,255,.18), transparent 50%),
+    radial-gradient(circle at 50% 50%, #1a1c22 0%, #07080a 70%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.08),
+    inset 0 2px 4px rgba(255,255,255,.18),
+    inset 0 -3px 8px rgba(0,0,0,.9),
+    0 0 0 0 var(--sos-glow);
+  animation:sosPulse 3.4s ease-in-out infinite;
+}
+.sos-btn .lbl{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:var(--syne);font-weight:700;letter-spacing:.15em;font-size:14px;
+  color:rgba(255,80,85,.65);
+  text-shadow:0 0 12px rgba(255,58,63,.6);
+}
+@keyframes sosPulse{
+  0%,100%{box-shadow:inset 0 0 0 1px rgba(255,255,255,.08),inset 0 2px 4px rgba(255,255,255,.18),inset 0 -3px 8px rgba(0,0,0,.9),0 0 0 0 rgba(255,58,63,.0)}
+  50%{box-shadow:inset 0 0 0 1px rgba(255,90,90,.18),inset 0 2px 4px rgba(255,255,255,.18),inset 0 -3px 8px rgba(0,0,0,.9),0 0 40px 6px rgba(255,58,63,.18)}
+}
+
+/* light beam from above */
+.beam{
+  position:absolute;left:50%;top:-15%;
+  width:120%;height:60%;
+  transform:translateX(-50%);
+  background:radial-gradient(50% 60% at 50% 0%, rgba(220,230,255,.20), transparent 70%);
+  filter:blur(4px);
+  pointer-events:none;
+}
+
+/* connector overlay — svg lines that grow from the bracelet to active labels */
+.connectors{
+  position:fixed;inset:0;z-index:6;pointer-events:none;
+}
+.connectors path{
+  fill:none;stroke:rgba(255,255,255,.35);stroke-width:1;
+  stroke-dasharray:1;stroke-dashoffset:1;
+  filter:drop-shadow(0 0 4px rgba(255,255,255,.35));
+}
+.connectors .endpt{
+  fill:#fff;
+  filter:drop-shadow(0 0 6px rgba(255,255,255,.6));
+}
+
+/* sections content positioning around the orbit */
+.section .content{
+  position:absolute;inset:0;
+  display:flex;
+  padding:120px 6vw 80px;
+}
+.col-left{justify-content:flex-start;align-items:center}
+.col-right{justify-content:flex-end;align-items:center}
+.col-top{justify-content:center;align-items:flex-start;padding-top:110px}
+.col-bottom{justify-content:center;align-items:flex-end;padding-bottom:80px}
+.col-tl{justify-content:flex-start;align-items:flex-start;padding-top:120px}
+.col-br{justify-content:flex-end;align-items:flex-end;padding-bottom:90px}
+
+.panel{
+  width:min(440px, 38vw);
+  position:relative;
+  opacity:0;transform:translateY(28px) scale(.96);
+  transition:opacity .9s ease, transform .9s cubic-bezier(.2,.7,.2,1);
+}
+.panel.in{opacity:1;transform:translateY(0) scale(1)}
+
+.eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--ink-dim);
+  margin-bottom:18px;
+}
+.eyebrow .num{
+  width:22px;height:22px;border-radius:50%;border:1px solid var(--line-2);
+  display:inline-flex;align-items:center;justify-content:center;color:var(--ink);
+}
+.title{
+  font-family:var(--syne);font-weight:600;
+  font-size:clamp(34px, 4.2vw, 64px);
+  line-height:1.02;letter-spacing:-.02em;
+  margin-bottom:18px;
+}
+.title em{font-style:normal;color:var(--ink-faint)}
+.lede{
+  color:var(--ink-dim);font-weight:300;
+  font-size:clamp(15px, 1.05vw, 17px);
+  line-height:1.55;
+  max-width:38ch;
+}
+
+/* hero */
+.hero{height:100vh}
+.hero-floor-tag{
+  position:absolute;left:50%;bottom:48px;transform:translateX(-50%);
+  display:flex;align-items:center;gap:10px;color:var(--ink-faint);
+  font-family:var(--mono);font-size:11px;letter-spacing:.3em;text-transform:uppercase;
+}
+.hero-floor-tag .line{width:32px;height:1px;background:var(--line-2)}
+.hero-chiplist{
+  display:flex;gap:8px;flex-wrap:wrap;margin-top:22px;
+}
+.hero-chiplist span{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--ink-dim);border:1px solid var(--line);border-radius:999px;padding:6px 11px;
+  background:rgba(255,255,255,.02);
+}
+.hero-marquee{
+  position:absolute;left:0;right:0;top:96px;
+  text-align:center;
+  font-family:var(--syne);font-weight:700;letter-spacing:-.04em;
+  font-size:clamp(56px, 9vw, 140px);
+  color:rgba(255,255,255,.04);
+  line-height:.9;pointer-events:none;
+}
+
+/* card variants */
+.notif-card{
+  background:linear-gradient(180deg, rgba(20,22,28,.85), rgba(8,9,12,.85));
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:18px;
+  box-shadow:0 30px 60px rgba(0,0,0,.5);
+  backdrop-filter:blur(10px);
+  margin-top:24px;
+}
+.notif-card .top{display:flex;align-items:center;gap:10px;margin-bottom:10px;color:var(--ink-dim);font-size:11px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.18em}
+.notif-card .top .dot{width:8px;height:8px;border-radius:50%;background:var(--sos);box-shadow:0 0 8px var(--sos-glow)}
+.notif-card h4{font-family:var(--syne);font-weight:600;font-size:18px;margin-bottom:6px}
+.notif-card p{color:var(--ink-dim);font-size:13.5px;line-height:1.5}
+.notif-card .meta{display:flex;gap:14px;margin-top:14px;color:var(--ink-faint);font-family:var(--mono);font-size:11px;letter-spacing:.06em}
+.notif-card .meta b{color:var(--ink);font-weight:500}
+
+.steps{margin-top:22px;display:flex;flex-direction:column;gap:14px}
+.step{display:flex;gap:14px;align-items:flex-start}
+.step .n{
+  flex:none;width:28px;height:28px;border-radius:50%;
+  border:1px solid var(--line-2);color:var(--ink);
+  font-family:var(--mono);font-size:12px;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.02);
+}
+.step .t{font-size:14px;color:var(--ink);font-weight:400}
+.step .d{font-size:13px;color:var(--ink-dim);margin-top:2px;line-height:1.5}
+
+/* ECG monitor */
+.ecg-card{
+  margin-top:22px;
+  background:linear-gradient(180deg, rgba(10,14,18,.85), rgba(4,6,10,.85));
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:22px;
+  position:relative;overflow:hidden;
+}
+.ecg-card .bpm{display:flex;align-items:flex-end;gap:8px;font-family:var(--syne);font-weight:700}
+.ecg-card .bpm .v{font-size:62px;line-height:.9;letter-spacing:-.04em;color:var(--ink)}
+.ecg-card .bpm .u{font-size:12px;color:var(--ink-dim);font-family:var(--mono);text-transform:uppercase;letter-spacing:.2em;margin-bottom:8px}
+.ecg-trace{
+  height:80px;margin:14px 0 8px;position:relative;
+  border-top:1px dashed var(--line);
+  border-bottom:1px dashed var(--line);
+}
+.ecg-trace svg{position:absolute;inset:0;width:100%;height:100%}
+.ecg-trace path{
+  fill:none;stroke:var(--pulse);stroke-width:1.5;
+  filter:drop-shadow(0 0 6px rgba(61,210,141,.5));
+  stroke-dasharray:600;
+  animation:ecgRoll 4s linear infinite;
+}
+@keyframes ecgRoll{from{stroke-dashoffset:0} to{stroke-dashoffset:-600}}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px}
+.stat{padding:10px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.02)}
+.stat .k{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint)}
+.stat .v{font-family:var(--syne);font-weight:600;font-size:18px;color:var(--ink);margin-top:4px}
+.warn-card{
+  margin-top:14px;border:1px solid rgba(255,58,63,.4);background:rgba(50,12,14,.45);
+  border-radius:14px;padding:14px;display:flex;gap:12px;align-items:flex-start;
+}
+.warn-card .ic{width:28px;height:28px;border-radius:50%;background:rgba(255,58,63,.18);border:1px solid rgba(255,58,63,.5);display:flex;align-items:center;justify-content:center;color:#ffb3b5;font-family:var(--syne);font-weight:700;font-size:13px;flex:none}
+.warn-card p{color:#ffd2d4;font-size:13px;line-height:1.5}
+
+/* gps map */
+.map-card{
+  margin-top:22px;
+  position:relative;height:260px;border-radius:18px;overflow:hidden;
+  border:1px solid var(--line);
+  background:
+    radial-gradient(60% 50% at 50% 50%, rgba(90,167,255,.10), transparent 70%),
+    linear-gradient(180deg, #07090d, #03050a);
+}
+.map-card .grid{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,.04) 1px, transparent 1px);
+  background-size:22px 22px;
+}
+.map-card .road{position:absolute;background:rgba(255,255,255,.06)}
+.map-card .r1{left:0;right:0;top:60%;height:6px}
+.map-card .r2{top:0;bottom:0;left:38%;width:6px}
+.map-card .b{position:absolute;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.06);border-radius:2px}
+.map-card .b1{left:8%;top:14%;width:50px;height:36px}
+.map-card .b2{left:18%;top:70%;width:38px;height:42px}
+.map-card .b3{right:14%;top:20%;width:46px;height:50px}
+.map-card .b4{right:18%;top:74%;width:32px;height:32px}
+.map-card .fence{
+  position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);
+  width:200px;height:200px;border-radius:50%;
+  border:1.5px dashed var(--pulse);
+  box-shadow:0 0 60px rgba(61,210,141,.18) inset;
+  animation:rotateFence 22s linear infinite;
+}
+@keyframes rotateFence{to{transform:translate(-50%,-50%) rotate(360deg)}}
+.map-card .pin{position:absolute;left:50%;top:48%;transform:translate(-50%,-100%)}
+.map-card .pin .dot{width:14px;height:14px;border-radius:50%;background:var(--gps);box-shadow:0 0 0 6px rgba(90,167,255,.18),0 0 18px var(--gps)}
+.map-card .pin .lbl{position:absolute;left:18px;top:-2px;font-family:var(--mono);font-size:11px;color:#cfe1ff;letter-spacing:.06em;background:rgba(0,0,0,.5);padding:3px 7px;border-radius:6px;border:1px solid rgba(90,167,255,.3)}
+.map-card .live{
+  position:absolute;left:14px;bottom:12px;display:flex;align-items:center;gap:8px;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;color:#fff;
+  background:rgba(0,0,0,.55);border:1px solid var(--line);padding:5px 9px;border-radius:999px;
+}
+.map-card .live .b{width:7px;height:7px;border-radius:50%;background:var(--pulse);animation:blink 1.2s ease infinite}
+@keyframes blink{50%{opacity:.3}}
+
+.bullets{margin-top:18px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bullets li{list-style:none;padding:12px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.02)}
+.bullets li b{display:block;font-family:var(--syne);font-weight:600;font-size:13.5px;margin-bottom:3px}
+.bullets li span{color:var(--ink-dim);font-size:12.5px;line-height:1.45}
+
+/* nfc card */
+.nfc-card{
+  margin-top:22px;border:1px solid var(--line);border-radius:18px;padding:18px;
+  background:linear-gradient(180deg, rgba(14,16,22,.85), rgba(4,6,10,.85));
+}
+.nfc-card .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.nfc-card .head .who{font-family:var(--syne);font-weight:600;font-size:16px}
+.nfc-card .head .who span{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;color:var(--ink-faint);text-transform:uppercase;margin-top:2px;font-weight:400}
+.nfc-card .head .badge{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--pulse);border:1px solid rgba(61,210,141,.4);padding:5px 10px;border-radius:999px}
+.nfc-card .rows{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.nfc-card .rows .row{padding:10px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.02)}
+.nfc-card .rows .k{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint)}
+.nfc-card .rows .v{font-family:var(--syne);font-weight:600;font-size:15px;color:var(--ink);margin-top:4px}
+.nfc-card .trend{margin-top:12px;padding:10px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.02)}
+.nfc-card .trend .k{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint);display:flex;justify-content:space-between}
+.nfc-card .bars{display:flex;align-items:flex-end;gap:5px;height:42px;margin-top:8px}
+.nfc-card .bars span{flex:1;background:linear-gradient(180deg,var(--pulse),rgba(61,210,141,.2));border-radius:2px;opacity:.9}
+
+/* sos contacts */
+.sos-list{margin-top:22px;display:flex;flex-direction:column;gap:10px}
+.sos-row{display:flex;align-items:center;gap:14px;padding:14px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.02)}
+.sos-row .lvl{
+  width:34px;height:34px;border-radius:50%;border:1px solid var(--line-2);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:11px;color:var(--ink);
+}
+.sos-row .lvl.crit{background:rgba(255,58,63,.15);border-color:rgba(255,58,63,.5);color:#ffb3b5}
+.sos-row .name{font-family:var(--syne);font-weight:600;font-size:14.5px}
+.sos-row .sub{color:var(--ink-dim);font-size:12.5px;margin-top:2px}
+.sos-row .arr{margin-left:auto;color:var(--ink-faint);font-family:var(--mono);font-size:12px}
+
+/* roadmap */
+.timeline{margin-top:22px;position:relative;padding-left:22px}
+.timeline::before{content:"";position:absolute;left:7px;top:8px;bottom:8px;width:1px;background:var(--line-2)}
+.tl-item{position:relative;padding:8px 0 18px}
+.tl-item .marker{position:absolute;left:-22px;top:8px;width:14px;height:14px;border-radius:50%;background:var(--bg);border:2px solid var(--line-2)}
+.tl-item.now .marker{border-color:var(--pulse);box-shadow:0 0 10px var(--pulse)}
+.tl-item.soon .marker{border-color:var(--gps);box-shadow:0 0 10px var(--gps)}
+.tl-item .yr{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint)}
+.tl-item .t{font-family:var(--syne);font-weight:600;font-size:16px;margin-top:2px}
+.tl-item .d{color:var(--ink-dim);font-size:13px;line-height:1.5;margin-top:4px}
+
+.ai-card{
+  margin-top:22px;border:1px solid var(--line);border-radius:18px;padding:18px;
+  background:
+    radial-gradient(120% 80% at 100% 0%, rgba(90,167,255,.10), transparent 60%),
+    linear-gradient(180deg, rgba(14,16,22,.85), rgba(4,6,10,.85));
+}
+.ai-card .from{font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--ink-faint);text-transform:uppercase}
+.ai-card .msg{font-family:var(--syne);font-weight:500;font-size:15.5px;line-height:1.5;margin-top:8px;color:var(--ink)}
+.ai-card .stamp{margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--ink-dim)}
+
+/* outro */
+.outro-title{
+  font-family:var(--syne);font-weight:600;
+  font-size:clamp(40px, 6.5vw, 88px);
+  line-height:1;letter-spacing:-.03em;
+  text-align:center;
+}
+.outro-sub{
+  text-align:center;color:var(--ink-dim);margin-top:14px;font-size:16px;
+  font-weight:300;max-width:50ch;
+}
+.outro-actions{display:flex;gap:12px;margin-top:30px;justify-content:center}
+.btn{
+  font-family:var(--body);font-weight:500;font-size:13px;letter-spacing:.06em;
+  padding:14px 22px;border-radius:999px;text-transform:uppercase;
+  display:inline-flex;align-items:center;gap:10px;
+  border:1px solid var(--line-2);background:rgba(255,255,255,.02);color:var(--ink);
+  transition:all .25s ease;
+}
+.btn:hover{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.3)}
+.btn.primary{background:#fff;color:#000;border-color:#fff}
+.btn.primary:hover{background:#e8e8e8}
+
+.center{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;width:100%;padding:90px 6vw}
+
+/* problem stats */
+.stats-row{display:flex;gap:18px;margin-top:22px}
+.stat-big{flex:1;padding:14px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.02)}
+.stat-big .n{font-family:var(--syne);font-weight:700;font-size:34px;letter-spacing:-.03em;color:var(--ink)}
+.stat-big .l{color:var(--ink-dim);font-size:12px;line-height:1.45;margin-top:6px}
+
+/* whisper text in hero corners */
+.corner-tag{
+  position:absolute;font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--ink-faint);
+}
+.ct-tl{top:120px;left:32px}
+.ct-tr{top:120px;right:32px;text-align:right}
+.ct-bl{bottom:32px;left:32px}
+.ct-br{bottom:32px;right:32px;text-align:right}
+
+/* progress rail */
+.rail{
+  position:fixed;right:24px;top:50%;transform:translateY(-50%);z-index:40;
+  display:flex;flex-direction:column;gap:14px;
+}
+.rail .pip{
+  width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.15);
+  transition:all .3s ease;
+}
+.rail .pip.on{background:#fff;box-shadow:0 0 10px rgba(255,255,255,.6);transform:scale(1.6)}
+.rail .lbl{
+  position:absolute;right:18px;top:50%;transform:translateY(-50%);
+  font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--ink-faint);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .25s;
+}
+
+.section-counter{
+  position:fixed;bottom:28px;left:28px;z-index:40;
+  font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--ink-dim);text-transform:uppercase;
+}
+
+/* responsive */
+@media (max-width: 900px){
+  .bracelet-mount{width:200px;height:60vh}
+  .panel{width:88vw}
+  .section .content{padding:110px 5vw 70px}
+  .col-left,.col-right,.col-top,.col-bottom,.col-tl,.col-br{align-items:flex-end;justify-content:center;padding-bottom:5vh}
+  .topbar nav{display:none}
+  .corner-tag.ct-tl,.corner-tag.ct-tr,.corner-tag.ct-bl,.corner-tag.ct-br{display:none}
+  .rail{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="page-bg"></div>
+<div class="page-grain"></div>
+
+<header class="topbar">
+  <div class="brand"><span class="dot"></span>VIVO</div>
+  <nav>
+    <a href="#cadute">Cadute</a>
+    <a href="#cuore">Cuore</a>
+    <a href="#gps">GPS</a>
+    <a href="#nfc">NFC</a>
+    <a href="#sos">SOS</a>
+    <a href="#futuro">Futuro</a>
+  </nav>
+  <a href="#contatti" class="cta">Richiedi info</a>
+</header>
+
+<!-- the fixed bracelet centerpiece -->
+<div class="bracelet-mount" aria-hidden="true">
+  <div class="beam"></div>
+  <div class="haze"></div>
+  <div class="bracelet-wrap" id="braceWrap">
+    <div class="bracelet" id="bracelet">
+      <div class="brace-top"></div>
+      <div class="brace-body"></div>
+      <div class="sos-btn"><div class="lbl">SOS</div></div>
+    </div>
+  </div>
+  <div class="floor"></div>
+  <div class="ripple r1"></div>
+  <div class="ripple r2"></div>
+  <div class="ripple r3"></div>
+</div>
+
+<!-- connector overlay -->
+<svg class="connectors" id="connectors" viewBox="0 0 1000 1000" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"></svg>
+
+<!-- progress rail -->
+<aside class="rail" id="rail"></aside>
+<div class="section-counter" id="counter">01 / 08</div>
+
+<main class="stage">
+
+  <!-- 1. HERO -->
+  <section class="section hero" data-screen-label="01 Hero">
+    <div class="hero-marquee">VIVO · VIVO · VIVO</div>
+    <span class="corner-tag ct-tl">VIVO · Bracciale Salvavita<br/>Generazione 1 · 2026</span>
+    <span class="corner-tag ct-tr">Acciaio inox · IP67<br/>5 giorni di autonomia</span>
+    <div class="content col-left">
+      <div class="panel" data-panel>
+        <div class="eyebrow"><span class="num">I</span> Sempre con te</div>
+        <h1 class="title">La tecnologia<br/>che protegge<br/>chi <em>ami</em>. Sempre.</h1>
+        <p class="lede">Cinque sensori, un solo dispositivo. VIVO veglia silenziosamente sui tuoi cari e risponde, da solo, nei secondi che contano.</p>
+        <div class="hero-chiplist">
+          <span>Cadute</span><span>Battito</span><span>GPS</span><span>NFC</span><span>SOS</span>
+        </div>
+      </div>
+    </div>
+    <span class="corner-tag ct-bl">↓ Scorri per esplorare</span>
+    <span class="corner-tag ct-br">v 1.0 · MAGGIO 2026</span>
+  </section>
+
+  <!-- 2. PROBLEMA -->
+  <section class="section" data-screen-label="02 Problema">
+    <div class="content col-right">
+      <div class="panel" data-panel>
+        <div class="eyebrow"><span class="num">II</span> Il contesto</div>
+        <h2 class="title">Una sfida<br/><em>silenziosa</em>.</h2>
+        <p class="lede">Le cadute sono la prima causa di ricovero d'urgenza over 65. I familiari non possono vegliare ventiquattro ore al giorno. Tra una caduta e i primi soccorsi possono passare ore.</p>
+        <div class="stats-row">
+          <div class="stat-big"><div class="n">1 su 3</div><div class="l">over 65 cade ogni anno</div></div>
+          <div class="stat-big"><div class="n">> 1h</div><div class="l">media senza allerta</div></div>
+          <div class="stat-big"><div class="n">24/7</div><div class="l">copertura impossibile</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. CADUTE -->
+  <section class="section" id="cadute" data-screen-label="03 Cadute">
+    <div class="content col-left">
+      <div class="panel" data-panel>
+        <div class="eyebrow"><span class="num">III</span> Rilevamento cadute</div>
+        <h2 class="title">Dalla caduta<br/>al soccorso in<br/><em>30 secondi</em>.</h2>
+        <p class="lede">Accelerometro a tre assi e giroscopio riconoscono l'evento in meno di 300ms. Un countdown di trenta secondi consente di annullare un falso allarme.</p>
+        <div class="notif-card">
+          <div class="top"><span class="dot"></span>VIVO · Notifica caduta · 16:42</div>
+          <h4>Caduta rilevata · Mario, 78</h4>
+          <p>Posizione: Via Roma 12, Lecce. Soccorsi automatici in corso. Nessun annullamento ricevuto.</p>
+          <div class="meta"><span>SMS · <b>inviato</b></span><span>GPS · <b>allegato</b></span><span>Storico · <b>+1</b></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. CUORE -->
+  <section class="section" id="cuore" data-screen-label="04 Cuore">
+    <div class="content col-right">
+      <div class="panel" data-panel>
+        <div class="eyebrow"><span class="num">IV</span> Monitoraggio cardiaco</div>
+        <h2 class="title">Un cuore<br/>sempre <em>ascoltato</em>.</h2>
+        <p class="lede">Sensore PPG ottico. Battito monitorato 24/7. Se manca per più di venti secondi, VIVO chiama il 118 con la posizione esatta.</p>
+        <div class="ecg-card">
+          <div class="bpm"><span class="v" id="bpmVal">72</span><span class="u">BPM · live</span></div>
+          <div class="ecg-trace">
+            <svg viewBox="0 0 600 80" preserveAspectRatio="none">
+              <path d="M0,40 L60,40 L70,40 L78,20 L86,60 L94,40 L160,40 L170,40 L178,20 L186,60 L194,40 L260,40 L270,40 L278,20 L286,60 L294,40 L360,40 L370,40 L378,20 L386,60 L394,40 L460,40 L470,40 L478,20 L486,60 L494,40 L560,40 L600,40"/>
+            </svg>
+          </div>
+          <div class="stat-grid">
+            <div class="stat"><div class="k">Media 7gg</div><div class="v">74</div></div>
+            <div class="stat"><div class="k">Max</div><div class="v">112</div></div>
+            <div class="stat"><div class="k">Min</div><div class="v">58</div></div>
+          </div>
+          <div class="warn-card"><div class="ic">!</div><p>SOS automatico al 118 se il battito è assente per oltre 20 secondi.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. GPS -->
+  <section class="section" id="gps" data-screen-label="05 GPS">
+    <div class="content col-left">
+      <div class="panel" data-panel>
+        <div class="eyebrow"><span class="num">V</span> GPS · Geofencing</div>
+        <h2 class="title">Sempre<br/><em>rintracciabile</em>.</h2>
+        <p class="lede">Posizione in tempo reale, zona sicura personalizzabile, e modalità ibrida GPS + GSM per il funzionamento anche al chiuso.</p>
+        <div class="map-card">
+          <div class="grid"></div>
+          <div class="road r1"></div><div class="road r2"></div>
+          <div class="b b1"></div><div class="b b2"></div><div class="b b3"></div><div class="b b4"></div>
+          <div class="fence"></div>
+          <div class="pin"><div class="dot"></div><div class="lbl">Mario · Via Roma</div></div>
+          <div class="live"><span class="b"></span>LIVE · aggiornato 5s fa</div>
+        </div>
+        <ul class="bullets">
+          <li><b>Geofencing</b><span>Notifica fuori zona sicura</span></li>
+          <li><b>Storico 30gg</b><span>Spostamenti e percorsi</span></li>
+          <li><b>GPS + GSM</b><span>Funziona indoor</span></li>
+          <li><b>Live</b><span>Update ogni 5s in emergenza</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. NFC -->
+  <section class="section" id="nfc" data-screen-label="06 NFC">
+    <div class="content col-right">
+      <div class="panel" data-panel>
+        <div class="eyebrow"><span class="num">VI</span> Cartella medica NFC</div>
+        <h2 class="title">La cartella medica<br/>sempre <em>al polso</em>.</h2>
+        <p class="lede">Qualsiasi smartphone NFC. Nessuna app, nessun codice. Soccorritori e medici leggono i dati avvicinando il telefono.</p>
+        <div class="nfc-card">
+          <div class="head">
+            <div class="who">Mario Rossi · 78<span>Cartella · NFC · sola lettura</span></div>
+            <div class="badge">● live</div>
+          </div>
+          <div class="rows">
+            <div class="row"><div class="k">Gruppo</div><div class="v">0 Rh+</div></div>
+            <div class="row"><div class="k">Allergie</div><div class="v">Penicillina</div></div>
+            <div class="row"><div class="k">Terapia</div><div class="v">Beta-bloccante</div></div>
+            <div class="row"><div class="k">Cadute 30gg</div><div class="v">1 · 12 mag</div></div>
+          </div>
+          <div class="trend">
+            <div class="k"><span>Battito · 7gg</span><span>media 74 bpm</span></div>
+            <div class="bars">
+              <span style="height:55%"></span><span style="height:62%"></span><span style="height:48%"></span>
+              <span style="height:70%"></span><span style="height:58%"></span><span style="height:66%"></span>
+              <span style="height:60%"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. SOS -->
+  <section class="section" id="sos" data-screen-label="07 SOS">
+    <div class="content col-left">
+      <div class="panel" data-panel>
+        <div class="eyebrow"><span class="num">VII</span> Tasto SOS</div>
+        <h2 class="title">Tre livelli.<br/>Una sola <em>certezza</em>.</h2>
+        <p class="lede">Pressione di tre secondi. VIVO chiama il primo contatto, poi il secondo, infine il 112. Fino a cinque contatti configurabili.</p>
+        <div class="sos-list">
+          <div class="sos-row">
+            <div class="lvl">1</div>
+            <div><div class="name">Anna · figlia</div><div class="sub">Chiamata diretta · sempre per prima</div></div>
+            <div class="arr">→</div>
+          </div>
+          <div class="sos-row">
+            <div class="lvl">2</div>
+            <div><div class="name">Luca · figlio</div><div class="sub">Se non risponde entro 30 secondi</div></div>
+            <div class="arr">→</div>
+          </div>
+          <div class="sos-row">
+            <div class="lvl crit">112</div>
+            <div><div class="name">Numero unico di emergenza</div><div class="sub">Automatico in assenza di risposta</div></div>
+            <div class="arr">→</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. FUTURO -->
+  <section class="section" id="futuro" data-screen-label="08 Futuro">
+    <div class="content col-right">
+      <div class="panel" data-panel>
+        <div class="eyebrow"><span class="num">VIII</span> Roadmap</div>
+        <h2 class="title">Da reattivo<br/>a <em>predittivo</em>.</h2>
+        <p class="lede">L'AI di seconda generazione riconoscerà i pattern anomali del ritmo cardiaco prima che diventino emergenza, avvisando familiari e medico.</p>
+        <div class="timeline">
+          <div class="tl-item now">
+            <div class="marker"></div>
+            <div class="yr">Oggi · Gen.1</div>
+            <div class="t">Sensori Core</div>
+            <div class="d">Cadute, battito, GPS, NFC, SOS — tutti attivi.</div>
+          </div>
+          <div class="tl-item soon">
+            <div class="marker"></div>
+            <div class="yr">Q3 2026</div>
+            <div class="t">AI cardiaca predittiva</div>
+            <div class="d">Messaggi proattivi ai familiari, prima dell'evento.</div>
+          </div>
+          <div class="tl-item">
+            <div class="marker"></div>
+            <div class="yr">2027</div>
+            <div class="t">Telemedicina integrata</div>
+            <div class="d">Connessione diretta con il medico curante.</div>
+          </div>
+          <div class="tl-item">
+            <div class="marker"></div>
+            <div class="yr">2027</div>
+            <div class="t">SpO₂ + Temperatura</div>
+            <div class="d">Nuovi sensori, stesso form factor.</div>
+          </div>
+        </div>
+        <div class="ai-card">
+          <div class="from">VIVO AI · 09:14</div>
+          <div class="msg">"Settimana positiva per Mario: battito stabile, nessuna caduta, attività regolare."</div>
+          <div class="stamp">— anteprima notifica proattiva</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9. OUTRO -->
+  <section class="section" id="contatti" data-screen-label="09 Outro">
+    <div class="center">
+      <div class="panel" data-panel style="width:auto;max-width:900px">
+        <h2 class="outro-title">La tecnologia<br/>che protegge chi <em>ami</em>.</h2>
+        <p class="outro-sub">Indossalo e dimenticatelo. In caso di bisogno, lui pensa a tutto.</p>
+        <div class="outro-actions">
+          <a class="btn primary" href="#">Richiedi informazioni →</a>
+          <a class="btn" href="#">Scarica scheda tecnica</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+(() => {
+  /* --- progress rail --- */
+  const sections = [...document.querySelectorAll('.section')];
+  const rail = document.getElementById('rail');
+  const counter = document.getElementById('counter');
+  const total = sections.length;
+  sections.forEach((s,i)=>{
+    const p = document.createElement('span');
+    p.className = 'pip';
+    rail.appendChild(p);
+  });
+  const pips = [...rail.children];
+
+  /* --- bracelet orbit / rotation driven by scroll --- */
+  const bracelet = document.getElementById('bracelet');
+  const wrap = document.getElementById('braceWrap');
+  const mount = document.querySelector('.bracelet-mount');
+  const connectors = document.getElementById('connectors');
+
+  function setBraceTransform(scrollProgress, localProgress){
+    // overall slow tilt as you progress; localProgress = position within current section
+    const rotY = -20 + scrollProgress * 40;        // -20deg..+20deg
+    const rotX = -4 + Math.sin(scrollProgress*Math.PI*2)*3;
+    const rotZ = Math.sin(scrollProgress*Math.PI*4)*2;
+    const scale = 0.94 + (1-Math.abs(scrollProgress-.5)*2)*0.06;
+    wrap.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg) rotateZ(${rotZ}deg) scale(${scale})`;
+  }
+
+  /* --- intersection observer for panel reveals --- */
+  const panels = document.querySelectorAll('[data-panel]');
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        e.target.classList.add('in');
+      } else {
+        // keep visible once shown for smoother feel
+      }
+    });
+  }, {threshold: 0.25});
+  panels.forEach(p=>io.observe(p));
+
+  /* --- connector line drawing from bracelet to current panel --- */
+  function drawConnector(){
+    const active = sections.findIndex((s,i)=>{
+      const r = s.getBoundingClientRect();
+      return r.top < window.innerHeight*0.5 && r.bottom > window.innerHeight*0.5;
+    });
+    const idx = active < 0 ? 0 : active;
+    const sec = sections[idx];
+    const panel = sec.querySelector('[data-panel]');
+    if(!panel) { connectors.innerHTML=''; return; }
+    const mountRect = mount.getBoundingClientRect();
+    const panelRect = panel.getBoundingClientRect();
+    const W = window.innerWidth, H = window.innerHeight;
+    // start: near edge of bracelet toward panel
+    const cx = mountRect.left + mountRect.width/2;
+    const cy = mountRect.top + mountRect.height/2;
+    // pick the closest edge of the panel
+    const px = panelRect.left + (panelRect.left > cx ? 0 : panelRect.width);
+    const py = panelRect.top + panelRect.height*0.18;
+    // edge of bracelet
+    const angle = Math.atan2(py - cy, px - cx);
+    const r = mountRect.width * 0.22;
+    const sx = cx + Math.cos(angle)*r;
+    const sy = cy + Math.sin(angle)*r;
+    // control point — curved
+    const mx = (sx + px)/2 + Math.cos(angle+Math.PI/2)*30;
+    const my = (sy + py)/2 + Math.sin(angle+Math.PI/2)*30;
+    connectors.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    connectors.innerHTML = `
+      <path d="M ${sx} ${sy} Q ${mx} ${my} ${px} ${py}" stroke-dasharray="none" stroke-dashoffset="0"/>
+      <circle class="endpt" cx="${sx}" cy="${sy}" r="2.5"/>
+      <circle class="endpt" cx="${px}" cy="${py}" r="3"/>
+    `;
+  }
+
+  /* --- BPM live counter --- */
+  const bpm = document.getElementById('bpmVal');
+  setInterval(()=>{
+    if(!bpm) return;
+    const v = 68 + Math.floor(Math.random()*11);
+    bpm.textContent = v;
+  }, 900);
+
+  /* --- main scroll loop --- */
+  let raf = 0;
+  function onScroll(){
+    if(raf) return;
+    raf = requestAnimationFrame(()=>{
+      raf = 0;
+      const doc = document.documentElement;
+      const max = doc.scrollHeight - window.innerHeight;
+      const sp = Math.min(1, Math.max(0, window.scrollY / max));
+      // local progress within current section
+      const idx = Math.min(total-1, Math.floor(window.scrollY / window.innerHeight));
+      const local = (window.scrollY - idx*window.innerHeight) / window.innerHeight;
+      setBraceTransform(sp, local);
+      pips.forEach((p,i)=>p.classList.toggle('on', i===idx));
+      counter.textContent = String(idx+1).padStart(2,'0') + ' / ' + String(total).padStart(2,'0');
+      drawConnector();
+    });
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  window.addEventListener('resize', onScroll);
+  onScroll();
+})();
+</script>
+</body>
+</html>
